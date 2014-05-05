@@ -1,0 +1,62 @@
+/*#define _WINSOCK_*/
+#include <WinSock2.h>
+#include <stdio.h>
+#pragma comment(lib, "ws2_32.lib")
+#define SERVER_ADDRESS "127.0.0.1"
+#define SERVER_PORT 17000
+#define MESSAGE_SIZE 256
+
+WSADATA Winsock;
+SOCKET Socket;
+
+char message[MESSAGE_SIZE];
+sockaddr_in ServerAddress;
+
+int SizeInt = sizeof(ServerAddress);
+int main()
+{
+	WSAStartup(MAKEWORD(2, 2), &Winsock);
+	if (LOBYTE(Winsock.wVersion) != 2 || HIBYTE(Winsock.wVersion) != 2)
+	{
+		WSACleanup();
+		return 1;
+	}
+	// Create a Socket socket    
+	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	// PREPARE CONNECT
+	ZeroMemory(&ServerAddress, sizeof(ServerAddress));
+
+	// Set up the sockaddr structure
+	ServerAddress.sin_family = AF_INET;
+	ServerAddress.sin_port = SERVER_PORT;
+
+	// Bind the Socket socket using the
+	// information in the sockaddr structure
+	bind(Socket, (sockaddr*)&ServerAddress, SizeInt);
+	while (true)
+	{
+		if (recvfrom(Socket, message, MESSAGE_SIZE, 0, (sockaddr*)&ServerAddress, &SizeInt))
+		{
+			//	Buffer[MESSAGE_SIZE - 1] = '\0';
+			printf("RECEIVED: ");
+			printf(message);
+			printf("\n");
+
+			if (message[0] == ' ')
+			{
+				break;
+			}
+		}
+		printf("please enter youe message: ");
+		gets_s(message);
+		printf("\n");
+		sendto(Socket, message, MESSAGE_SIZE, 0, (sockaddr*)&ServerAddress, SizeInt);
+		if (message[0] == ' ')
+		{
+			break;
+		}
+
+	}
+	WSACleanup();
+	return 0;
+}
